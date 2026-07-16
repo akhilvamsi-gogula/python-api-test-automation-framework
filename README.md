@@ -6,12 +6,12 @@ Production-style API test automation framework built with Python, Pytest, and Re
 
 ## Why This Project Exists
 
-Modern backend and QA teams rely on automated checks to verify that APIs are secure, reliable, and fast [web:90][web:98]. This repository is a compact but realistic example of such a framework:
+Modern backend and QA teams rely on automated checks to verify that APIs are secure, reliable, and fast. This repository is a compact but realistic example of such a framework:
 
 - Uses **real APIs**, not mocks (GitHub REST API, JSONPlaceholder).
 - Covers **authentication**, **CRUD operations**, **negative scenarios**, and **basic performance**.
 - Produces a **HTML report** and **structured logs** that non-developers can read.
-- Is organized to be easily extended into CI/CD pipelines and larger suites [web:84][web:86][web:98].
+- Is organized to be easily extended into CI/CD pipelines and larger suites.
 
 This makes it suitable as a portfolio project for QA / SDET / backend testing roles.
 
@@ -39,7 +39,7 @@ Authenticated tests against the GitHub API validate:
 - Identity consistency for the configured account.
 - Repository listing and basic repository payload structure.
 - Security behavior for unauthenticated access.
-- Response headers and simple performance checks [web:3][web:9][web:10].
+- Response headers and simple performance checks.
 
 ### JSONPlaceholder API
 
@@ -51,7 +51,7 @@ Public tests against JSONPlaceholder validate:
 - Update behavior (`PUT /posts/1`).
 - Deletion behavior (`DELETE /posts/1`).
 - Non-existent resource handling.
-- Query parameter filtering (`GET /posts?userId=1`) [web:8].
+- Query parameter filtering (`GET /posts?userId=1`).
 
 ---
 
@@ -72,7 +72,7 @@ python-api-test-automation-framework/
 
 Key design decisions:
 
-- **Fixtures in `conftest.py`** give a single source of truth for base URLs and authentication, which is a common practice in production frameworks [web:84][web:86][web:98].
+- **Fixtures in `conftest.py`** give a single source of truth for base URLs and authentication, which is a common practice in production frameworks.
 - **Tests grouped by API** keep responsibilities clear and make it easy to add more services later.
 - **Logging and HTML reporting** provide observable, shareable test runs for teams.
 
@@ -119,7 +119,7 @@ Create a `.env` file in the project root:
 GITHUB_TOKEN=your_github_token_here
 ```
 
-Use `.env.example` as a template. The token is **not** committed to Git; it is loaded at runtime via `python-dotenv`, and tests will fail fast if the variable is missing [web:3][web:86].
+Use `.env.example` as a template. The token is **not** committed to Git; it is loaded at runtime via `python-dotenv`, and tests will fail fast if the variable is missing.
 
 On GitHub, create a PAT (personal access token) with minimal scopes required for reading user and repository details.
 
@@ -137,7 +137,7 @@ This uses the options defined in `pytest.ini`:
 
 - `-v` for verbose test output.
 - `--html=report.html --self-contained-html` for a single-file HTML report.
-- `--capture=tee-sys` to show logs in the console and embed them into the report [web:59][web:69][web:83].
+- `--capture=tee-sys` to show logs in the console and embed them into the report.
 
 Logs are also written to `logs/test.log`.
 
@@ -178,7 +178,7 @@ Open `report.html` in a browser to review:
 This framework is intentionally small but structured to grow:
 
 - **Configuration via fixtures** makes it easy to add more environments (dev, stage, prod).
-- **Logging** is centralized and formatted for both console and file output, which is a common pattern in serious test frameworks [web:69][web:83].
+- **Logging** is centralized and formatted for both console and file output, which is a common pattern in serious test frameworks.
 - **HTML reporting** can be plugged into CI pipelines (e.g. GitHub Actions, GitLab CI) for nightly or per-commit runs.
 
 Possible extensions:
@@ -186,7 +186,7 @@ Possible extensions:
 - JSON schema validation using `jsonschema` or Cerberus.
 - More APIs (internal services, third-party payment or auth APIs).
 - Pytest markers (smoke, regression, performance).
-- GitHub Actions workflow to run tests on push and publish `report.html` as an artifact [web:84][web:91][web:93][web:98].
+- GitHub Actions workflow to run tests on push and publish `report.html` as an artifact.
 
 ---
 
