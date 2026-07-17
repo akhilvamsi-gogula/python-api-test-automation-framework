@@ -1,6 +1,6 @@
 # Python API Test Automation Framework
 
-Production-style API test automation framework built with Python, Pytest, and Requests to validate live public REST APIs. This project demonstrates authenticated API testing, CRUD workflow validation, response assertions, reusable fixtures, environment-based secret handling, and HTML test reporting.
+Production-style API test automation framework built with Python, Pytest, and Requests to validate live public REST APIs. This project demonstrates authenticated API testing, CRUD workflow validation, response assertions, reusable fixtures, environment-based secret handling, HTML test reporting, and CI integration with GitHub Actions.
 
 ---
 
@@ -10,10 +10,9 @@ Modern backend and QA teams rely on automated checks to verify that APIs are sec
 
 - Uses **real APIs**, not mocks (GitHub REST API, JSONPlaceholder).
 - Covers **authentication**, **CRUD operations**, **negative scenarios**, and **basic performance**.
-- Produces a **HTML report** and **structured logs** that non-developers can read.
-- Is organized to be easily extended into CI/CD pipelines and larger suites.
-
-This makes it suitable as a portfolio project for QA / SDET / backend testing roles.
+- Produces a **HTML report** and **structured logs** that are easy to review.
+- Runs automatically in **GitHub Actions** with **coverage reporting**.
+- Is organized to be extended into larger suites and CI/CD pipelines.
 
 ---
 
@@ -24,7 +23,9 @@ This makes it suitable as a portfolio project for QA / SDET / backend testing ro
 - Requests
 - python-dotenv
 - pytest-html
+- pytest-cov
 - Standard Python logging
+- GitHub Actions (CI)
 
 ---
 
@@ -38,7 +39,7 @@ Authenticated tests against the GitHub API validate:
 - User profile contract (required fields and types).
 - Identity consistency for the configured account.
 - Repository listing and basic repository payload structure.
-- Security behavior for unauthenticated access.
+- Security behavior for unauthenticated access to `/user`.
 - Response headers and simple performance checks.
 
 ### JSONPlaceholder API
@@ -64,17 +65,15 @@ python-api-test-automation-framework/
 │   └── test_jsonplaceholder.py     # CRUD, negative tests, query params
 ├── conftest.py                     # Shared fixtures: base URLs, GitHub token, headers
 ├── pytest.ini                      # Pytest configuration, HTML report, logging
-├── requirements.txt                # Dependencies
+├── requirements.txt                # Dependencies (including pytest-html, pytest-cov)
 ├── .env.example                    # Example environment variables
-├── .gitignore                      # Ignored files (venv, logs, local report, env)
+├── .github/
+│   └── workflows/
+│       └── api-tests.yml           # GitHub Actions workflow for CI
+├── .gitattributes                  # Linguist overrides (exclude generated HTML from stats)
+├── .gitignore                      # Ignored files (venv, logs, local report, env, coverage)
 └── README.md
 ```
-
-Key design decisions:
-
-- **Fixtures in `conftest.py`** give a single source of truth for base URLs and authentication, which is a common practice in production frameworks.
-- **Tests grouped by API** keep responsibilities clear and make it easy to add more services later.
-- **Logging and HTML reporting** provide observable, shareable test runs for teams.
 
 ---
 
@@ -119,13 +118,13 @@ Create a `.env` file in the project root:
 GITHUB_TOKEN=your_github_token_here
 ```
 
-Use `.env.example` as a template. The token is **not** committed to Git; it is loaded at runtime via `python-dotenv`, and tests will fail fast if the variable is missing.
+Use `.env.example` as a template. The token is **not** committed to Git; it is loaded at runtime via `python-dotenv`, and tests fail fast if the variable is missing.
 
-On GitHub, create a PAT (personal access token) with minimal scopes required for reading user and repository details.
+On GitHub, create a personal access token with minimal scopes required to read user and repository details, and keep it secret.
 
 ---
 
-## Running the Test Suite
+## Running the Test Suite Locally
 
 Run all tests with logging and HTML reporting:
 
@@ -133,19 +132,38 @@ Run all tests with logging and HTML reporting:
 pytest
 ```
 
-This uses the options defined in `pytest.ini`:
+To include coverage in the local run:
 
-- `-v` for verbose test output.
-- `--html=report.html --self-contained-html` for a single-file HTML report.
-- `--capture=tee-sys` to show logs in the console and embed them into the report.
+```bash
+pytest \
+  --cov=. \
+  --cov-report=term-missing \
+  --cov-report=xml:coverage.xml \
+  --html=report.html \
+  --self-contained-html
+```
 
-Logs are also written to `logs/test.log`.
+- `report.html` can be opened in a browser to inspect test results and logs.
+- `coverage.xml` can be used by coverage tools or CI.
 
-Open `report.html` in a browser to review:
+---
 
-- Test summary.
-- Per-test logs (URLs called, status codes, payload snippets).
-- Execution times.
+## Continuous Integration (GitHub Actions)
+
+This project includes a GitHub Actions workflow in `.github/workflows/api-tests.yml` that:
+
+- Triggers on `push` and `pull_request` to the `main` branch.
+- Checks out the code.
+- Sets up Python.
+- Installs dependencies from `requirements.txt`.
+- Runs pytest with coverage:
+  - `--cov=.` for coverage over the whole project.
+  - `--cov-report=term-missing` for a detailed summary in logs.
+  - `--cov-report=xml:coverage.xml` to generate a coverage report file.
+  - `--html=report.html --self-contained-html` to generate an HTML test report.
+- Uploads `report.html` and `coverage.xml` as artifacts for each workflow run.
+
+The workflow reads `GITHUB_TOKEN` from a repository secret (`GITHUB_TOKEN_API_TESTS`), which keeps credentials out of the codebase while still enabling authenticated API tests in CI.
 
 ---
 
@@ -153,13 +171,13 @@ Open `report.html` in a browser to review:
 
 ### GitHub API
 
-- Auth check: `GET /user` returns `200` and a valid profile.
+- Auth check: `GET /user` returns status 200 and a valid profile.
 - Contract checks: core fields (`login`, `id`, `type`, `html_url`) and types.
 - Identity check: authenticated user matches the expected GitHub login.
 - Repository listing: `GET /user/repos` returns a list with key fields (`name`, `full_name`, `private`, `html_url`, `default_branch`).
-- Negative scenario: invalid username returns `403` or `404`.
-- Security: unauthenticated `GET /user` returns `401` or `403`.
-- Basic performance: simple response-time assertion and JSON `Content-Type`.
+- Negative scenario: invalid username returns a client error (403/404).
+- Security: unauthenticated `GET /user` returns 401/403.
+- Basic performance: response times for `/user` remain under a defined threshold.
 
 ### JSONPlaceholder API
 
@@ -168,7 +186,7 @@ Open `report.html` in a browser to review:
 - Create contract: `POST /posts` echoes key fields and returns an `id`.
 - Update contract: `PUT /posts/1` returns updated values for the resource.
 - Delete behavior: `DELETE /posts/1` returns a success status.
-- Negative scenario: high ID returns `404` or an empty object, depending on service.
+- Negative scenario: high ID returns a client error or an empty object.
 - Query behavior: `GET /posts?userId=1` returns posts where `userId == 1`.
 
 ---
@@ -177,27 +195,16 @@ Open `report.html` in a browser to review:
 
 This framework is intentionally small but structured to grow:
 
-- **Configuration via fixtures** makes it easy to add more environments (dev, stage, prod).
-- **Logging** is centralized and formatted for both console and file output, which is a common pattern in serious test frameworks.
-- **HTML reporting** can be plugged into CI pipelines (e.g. GitHub Actions, GitLab CI) for nightly or per-commit runs.
+- **Fixtures in `conftest.py`** provide a single source of truth for base URLs and authentication.
+- **Logging** is configured for both console and file output, and integrates with the HTML report.
+- **HTML reporting** and **coverage** are wired into CI, making it easy to monitor test health over time.
 
 Possible extensions:
 
-- JSON schema validation using `jsonschema` or Cerberus.
-- More APIs (internal services, third-party payment or auth APIs).
+- JSON schema validation for responses.
+- Additional APIs or microservices under test.
 - Pytest markers (smoke, regression, performance).
-- GitHub Actions workflow to run tests on push and publish `report.html` as an artifact.
-
----
-
-## Use Cases
-
-This repository can be used to:
-
-- Demonstrate API testing skills.
-- Serve as a starting point for a team API automation framework.
-- Practice designing positive, negative, security, and performance test scenarios.
-- Validate integration behavior for live APIs.
+- More CI jobs (matrix builds, different Python versions).
 
 ---
 
