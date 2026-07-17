@@ -12,7 +12,7 @@ jobs:
 
     env:
       # Expose GitHub token secret as environment variable for tests
-      GITHUB_TOKEN: ${{ secrets.NEW_API_TESTS_SECRET}}
+      GITHUB_TOKEN: ${{ secrets.NEW_API_TESTS_SECRET }}
 
     steps:
       - name: Checkout code
