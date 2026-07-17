@@ -157,7 +157,7 @@ Open `report.html` in a browser to review:
 - Contract checks: core fields (`login`, `id`, `type`, `html_url`) and types.
 - Identity check: authenticated user matches the expected GitHub login.
 - Repository listing: `GET /user/repos` returns a list with key fields (`name`, `full_name`, `private`, `html_url`, `default_branch`).
-- Negative scenario: invalid username returns `404`.
+- Negative scenario: invalid username returns `403` or `404`.
 - Security: unauthenticated `GET /user` returns `401` or `403`.
 - Basic performance: simple response-time assertion and JSON `Content-Type`.
 
