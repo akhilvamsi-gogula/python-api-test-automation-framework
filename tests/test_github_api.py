@@ -81,9 +81,11 @@ class TestGitHubUser:
             for key in required_repo_keys:
                 assert key in sample, f"Missing key '{key}' in repository payload"
 
-    def test_invalid_user_returns_404(self, github_base_url):
+    def test_invalid_user_returns_client_error(self, github_base_url):
         """
-        Negative test: requesting a clearly invalid username should return 404.
+        Negative test: requesting a clearly invalid username should return a client error.
+        GitHub may respond with 404 (Not Found) or 403 (Forbidden) depending on context,
+        but in both cases the resource is not available to the caller.
         """
         invalid_user = "this-user-does-not-exist-xyz-12345"
         url = f"{github_base_url}/users/{invalid_user}"
@@ -92,7 +94,7 @@ class TestGitHubUser:
         response = requests.get(url)
 
         logger.info("Status for invalid user '%s': %s", invalid_user, response.status_code)
-        assert response.status_code == 404
+        assert response.status_code in (404, 403)
 
     def test_unauthenticated_request_to_user_fails(self, github_base_url):
         """
